@@ -5,6 +5,7 @@
 
 // DOM Elements
 const passwordInput = document.getElementById('passwordInput');
+const clearBtn = document.getElementById('clearBtn');
 const copyBtn = document.getElementById('copyBtn');
 const copyToast = document.getElementById('copyToast');
 const regenerateBtn = document.getElementById('regenerateBtn');
@@ -146,6 +147,18 @@ function updateLengthDisplay() {
 }
 
 /**
+ * Clear password field
+ */
+function clearPassword() {
+    passwordInput.value = '';
+    // Reset strength meter
+    strengthMeter.style.width = '0%';
+    strengthText.textContent = '-';
+    strengthText.className = 'strength-text';
+    entropyValue.textContent = '0';
+}
+
+/**
  * Copy password to clipboard
  */
 function copyToClipboard() {
@@ -206,6 +219,9 @@ function updateThemeIcon() {
 function setupEventListeners() {
     // Regenerate button
     regenerateBtn.addEventListener('click', generateNewPassword);
+
+    // Clear button
+    clearBtn.addEventListener('click', clearPassword);
 
     // Copy button
     copyBtn.addEventListener('click', copyToClipboard);
