@@ -54,6 +54,25 @@ body {
     color: var(--text-primary);
     transition: background-color 0.2s ease, color 0.2s ease;
     overflow-y: auto;
+    position: relative;
+}
+
+/* Resize Handle */
+.resize-handle {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: nwse-resize;
+    background: linear-gradient(135deg, transparent 50%, var(--accent-color) 50%);
+    opacity: 0.3;
+    transition: opacity 0.2s ease;
+    z-index: 9999;
+}
+
+.resize-handle:hover {
+    opacity: 0.7;
 }
 
 .container {
@@ -298,6 +317,108 @@ body {
 #entropyValue {
     color: var(--accent-color);
     font-weight: 600;
+}
+
+/* Presets Section */
+.presets-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.presets-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.presets-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+}
+
+.preset-btn {
+    padding: 10px 12px;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.preset-btn:hover {
+    border-color: var(--accent-color);
+    background-color: var(--bg-tertiary);
+    color: var(--accent-color);
+}
+
+.preset-btn:active {
+    transform: scale(0.95);
+}
+
+/* Requirements Section */
+.requirements-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.requirements-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.requirements-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    font-size: 12px;
+}
+
+.requirement-item:hover {
+    border-color: var(--accent-color);
+    background-color: var(--bg-tertiary);
+}
+
+.requirement-item:has(.requirement-checkbox:checked) {
+    border-color: var(--accent-color);
+    background-color: rgba(29, 155, 240, 0.1);
+}
+
+.requirement-checkbox {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: var(--accent-color);
+    border-radius: 3px;
+}
+
+.requirement-text {
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 /* Controls Section */

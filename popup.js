@@ -23,14 +23,72 @@ const strengthMeter = document.getElementById('strengthMeter');
 const strengthText = document.getElementById('strengthText');
 const entropyValue = document.getElementById('entropyValue');
 
+// Presets
+const presetSecure = document.getElementById('presetSecure');
+const presetWebsite = document.getElementById('presetWebsite');
+const presetPin = document.getElementById('presetPin');
+
+// Requirements
+const reqNumbers = document.getElementById('reqNumbers');
+const reqSymbols = document.getElementById('reqSymbols');
+const reqNoSimilar = document.getElementById('reqNoSimilar');
+
 // Settings storage key
 const STORAGE_KEY = 'randomix_settings';
+
+/**
+ * Apply preset settings
+ */
+function applyPreset(preset) {
+    switch(preset) {
+        case 'secure':
+            lengthSlider.value = 32;
+            lengthInput.value = 32;
+            uppercaseToggle.checked = true;
+            lowercaseToggle.checked = true;
+            numbersToggle.checked = true;
+            symbolsToggle.checked = true;
+            break;
+        case 'website':
+            lengthSlider.value = 20;
+            lengthInput.value = 20;
+            uppercaseToggle.checked = true;
+            lowercaseToggle.checked = true;
+            numbersToggle.checked = true;
+            symbolsToggle.checked = true;
+            break;
+        case 'pin':
+            lengthSlider.value = 8;
+            lengthInput.value = 8;
+            uppercaseToggle.checked = false;
+            lowercaseToggle.checked = false;
+            numbersToggle.checked = true;
+            symbolsToggle.checked = false;
+            break;
+    }
+    generateNewPassword();
+    saveSettings();
+}
+
+/**
+ * Check if password meets requirements
+ */
+function meetsRequirements(password) {
+    if (reqNumbers.checked && !/[0-9]/.test(password)) return false;
+    if (reqSymbols.checked && !/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) return false;
+    if (reqNoSimilar.checked && /[0O1il|`]/.test(password)) return false;
+    return true;
+}
 
 /**
  * Initialize the extension
  */
 function init() {
     try {
+        // Check system preference for dark/light mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            document.body.classList.add('light-mode');
+        }
         loadSettings();
         setupEventListeners();
     } catch (error) {
@@ -111,7 +169,15 @@ function generateNewPassword() {
         regenerateBtn.disabled = false;
     }
 
-    const password = passwordGenerator.generate(length, options);
+    let password = passwordGenerator.generate(length, options);
+
+    // Regenerate if password doesn't meet requirements (max 10 attempts)
+    let attempts = 0;
+    while (!meetsRequirements(password) && attempts < 10) {
+        password = passwordGenerator.generate(length, options);
+        attempts++;
+    }
+
     passwordInput.value = password;
 
     updateStrengthMeter();
@@ -269,9 +335,74 @@ function setupEventListeners() {
     // Theme toggle
     themeToggle.addEventListener('click', toggleDarkMode);
 
+    // Preset buttons
+    presetSecure.addEventListener('click', () => applyPreset('secure'));
+    presetWebsite.addEventListener('click', () => applyPreset('website'));
+    presetPin.addEventListener('click', () => applyPreset('pin'));
+
+    // Requirements checkboxes
+    [reqNumbers, reqSymbols, reqNoSimilar].forEach(req => {
+        req.addEventListener('change', () => {
+            generateNewPassword();
+        });
+    });
+
     // Allow copying by clicking the password input
     passwordInput.addEventListener('click', copyToClipboard);
 }
+
+// Drag-to-Resize functionality
+let isResizing = false;
+let currentWidth = 400;
+let currentHeight = 500;
+let startX = 0;
+let startY = 0;
+
+const resizeHandle = document.getElementById('resizeHandle');
+const html = document.documentElement;
+const body = document.body;
+
+resizeHandle.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    currentWidth = window.innerWidth;
+    currentHeight = window.innerHeight;
+    e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+
+    const deltaX = e.clientX - startX;
+    const deltaY = e.clientY - startY;
+
+    const newWidth = Math.max(300, currentWidth + deltaX);
+    const newHeight = Math.max(300, currentHeight + deltaY);
+
+    html.style.width = newWidth + 'px';
+    html.style.height = newHeight + 'px';
+    body.style.width = newWidth + 'px';
+    body.style.height = newHeight + 'px';
+
+    // Store resize preference
+    chrome.storage.local.set({ 'randomix_dimensions': { width: newWidth, height: newHeight } });
+});
+
+document.addEventListener('mouseup', () => {
+    isResizing = false;
+});
+
+// Load saved dimensions on startup
+chrome.storage.local.get(['randomix_dimensions'], (result) => {
+    if (result.randomix_dimensions) {
+        const { width, height } = result.randomix_dimensions;
+        html.style.width = width + 'px';
+        html.style.height = height + 'px';
+        body.style.width = width + 'px';
+        body.style.height = height + 'px';
+    }
+});
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', init);

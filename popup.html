@@ -6,7 +6,8 @@
     <title>Randomix - Password Generator</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body style="width:400px;height:500px;margin:0;padding:0;">
+<body style="width:400px;height:500px;margin:0;padding:0;overflow:hidden;resize:both;">
+    <div class="resize-handle" id="resizeHandle" title="Drag to resize"></div>
     <div class="container">
         <!-- Header -->
         <div class="header">
@@ -53,6 +54,22 @@
             </div>
         </div>
 
+        <!-- Presets Section -->
+        <div class="presets-section">
+            <label class="presets-label">Quick Presets</label>
+            <div class="presets-grid">
+                <button id="presetSecure" class="preset-btn" title="Long password with all character types">
+                    🔒 Secure
+                </button>
+                <button id="presetWebsite" class="preset-btn" title="Medium password with numbers and symbols">
+                    🌐 Website
+                </button>
+                <button id="presetPin" class="preset-btn" title="Short PIN with numbers only">
+                    # PIN
+                </button>
+            </div>
+        </div>
+
         <!-- Controls Section -->
         <div class="controls-section">
             <!-- Length Slider and Input -->
@@ -80,6 +97,25 @@
                     value="16"
                     class="slider"
                 >
+            </div>
+
+            <!-- Strength Requirements -->
+            <div class="requirements-section">
+                <label class="requirements-label">Password Requirements (Optional)</label>
+                <div class="requirements-grid">
+                    <label class="requirement-item">
+                        <input type="checkbox" id="reqNumbers" class="requirement-checkbox">
+                        <span class="requirement-text">Must have numbers</span>
+                    </label>
+                    <label class="requirement-item">
+                        <input type="checkbox" id="reqSymbols" class="requirement-checkbox">
+                        <span class="requirement-text">Must have symbols</span>
+                    </label>
+                    <label class="requirement-item">
+                        <input type="checkbox" id="reqNoSimilar" class="requirement-checkbox">
+                        <span class="requirement-text">No similar chars</span>
+                    </label>
+                </div>
             </div>
 
             <!-- Character Options -->
