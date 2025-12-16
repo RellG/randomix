@@ -24,8 +24,6 @@ const strengthText = document.getElementById('strengthText');
 const entropyValue = document.getElementById('entropyValue');
 
 // Presets
-const presetSecure = document.getElementById('presetSecure');
-const presetWebsite = document.getElementById('presetWebsite');
 const presetPin = document.getElementById('presetPin');
 
 // Requirements
@@ -41,25 +39,11 @@ const STORAGE_KEY = 'randomix_settings';
  */
 function applyPreset(preset) {
     switch(preset) {
-        case 'secure':
-            lengthSlider.value = 32;
-            lengthInput.value = 32;
-            uppercaseToggle.checked = true;
-            lowercaseToggle.checked = true;
-            numbersToggle.checked = true;
-            symbolsToggle.checked = true;
-            break;
-        case 'website':
-            lengthSlider.value = 20;
-            lengthInput.value = 20;
-            uppercaseToggle.checked = true;
-            lowercaseToggle.checked = true;
-            numbersToggle.checked = true;
-            symbolsToggle.checked = true;
-            break;
         case 'pin':
-            lengthSlider.value = 8;
-            lengthInput.value = 8;
+            lengthSlider.value = 4;
+            lengthSlider.min = 4;
+            lengthInput.value = 4;
+            lengthInput.min = 4;
             uppercaseToggle.checked = false;
             lowercaseToggle.checked = false;
             numbersToggle.checked = true;
@@ -335,9 +319,7 @@ function setupEventListeners() {
     // Theme toggle
     themeToggle.addEventListener('click', toggleDarkMode);
 
-    // Preset buttons
-    presetSecure.addEventListener('click', () => applyPreset('secure'));
-    presetWebsite.addEventListener('click', () => applyPreset('website'));
+    // Preset button
     presetPin.addEventListener('click', () => applyPreset('pin'));
 
     // Requirements checkboxes
@@ -353,54 +335,62 @@ function setupEventListeners() {
 
 // Drag-to-Resize functionality
 let isResizing = false;
-let currentWidth = 400;
-let currentHeight = 500;
 let startX = 0;
 let startY = 0;
 
 const resizeHandle = document.getElementById('resizeHandle');
-const html = document.documentElement;
-const body = document.body;
 
-resizeHandle.addEventListener('mousedown', (e) => {
-    isResizing = true;
-    startX = e.clientX;
-    startY = e.clientY;
-    currentWidth = window.innerWidth;
-    currentHeight = window.innerHeight;
-    e.preventDefault();
-});
+if (resizeHandle) {
+    resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        e.preventDefault();
+        document.body.style.cursor = 'nwse-resize';
+    });
 
-document.addEventListener('mousemove', (e) => {
-    if (!isResizing) return;
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
 
-    const deltaX = e.clientX - startX;
-    const deltaY = e.clientY - startY;
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
 
-    const newWidth = Math.max(300, currentWidth + deltaX);
-    const newHeight = Math.max(300, currentHeight + deltaY);
+        const currentWidth = window.innerWidth;
+        const currentHeight = window.innerHeight;
 
-    html.style.width = newWidth + 'px';
-    html.style.height = newHeight + 'px';
-    body.style.width = newWidth + 'px';
-    body.style.height = newHeight + 'px';
+        const newWidth = Math.max(300, currentWidth + deltaX);
+        const newHeight = Math.max(300, currentHeight + deltaY);
 
-    // Store resize preference
-    chrome.storage.local.set({ 'randomix_dimensions': { width: newWidth, height: newHeight } });
-});
+        // Update window size inline
+        document.documentElement.style.width = newWidth + 'px';
+        document.documentElement.style.height = newHeight + 'px';
+        document.body.style.width = newWidth + 'px';
+        document.body.style.height = newHeight + 'px';
+        document.documentElement.style.minWidth = newWidth + 'px';
+        document.documentElement.style.minHeight = newHeight + 'px';
 
-document.addEventListener('mouseup', () => {
-    isResizing = false;
-});
+        // Store resize preference
+        chrome.storage.local.set({ 'randomix_dimensions': { width: newWidth, height: newHeight } });
+    });
+
+    document.addEventListener('mouseup', () => {
+        isResizing = false;
+        document.body.style.cursor = 'default';
+    });
+}
 
 // Load saved dimensions on startup
 chrome.storage.local.get(['randomix_dimensions'], (result) => {
     if (result.randomix_dimensions) {
         const { width, height } = result.randomix_dimensions;
-        html.style.width = width + 'px';
-        html.style.height = height + 'px';
-        body.style.width = width + 'px';
-        body.style.height = height + 'px';
+        document.documentElement.style.width = width + 'px';
+        document.documentElement.style.height = height + 'px';
+        document.documentElement.style.minWidth = width + 'px';
+        document.documentElement.style.minHeight = height + 'px';
+        document.body.style.width = width + 'px';
+        document.body.style.height = height + 'px';
+        document.body.style.minWidth = width + 'px';
+        document.body.style.minHeight = height + 'px';
     }
 });
 
