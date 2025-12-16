@@ -89,6 +89,13 @@ function init() {
  */
 function loadSettings() {
     chrome.storage.local.get([STORAGE_KEY], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error('Storage read error:', chrome.runtime.lastError);
+            updateLengthDisplay();
+            generateNewPassword();
+            return;
+        }
+
         if (result[STORAGE_KEY]) {
             const settings = result[STORAGE_KEY];
             lengthSlider.value = settings.length || 16;
@@ -125,7 +132,11 @@ function saveSettings() {
         symbols: symbolsToggle.checked,
         lightMode: document.body.classList.contains('light-mode')
     };
-    chrome.storage.local.set({ [STORAGE_KEY]: settings });
+    chrome.storage.local.set({ [STORAGE_KEY]: settings }, () => {
+        if (chrome.runtime.lastError) {
+            console.error('Storage write error:', chrome.runtime.lastError);
+        }
+    });
 }
 
 /**
@@ -332,67 +343,6 @@ function setupEventListeners() {
     // Allow copying by clicking the password input
     passwordInput.addEventListener('click', copyToClipboard);
 }
-
-// Drag-to-Resize functionality
-let isResizing = false;
-let startX = 0;
-let startY = 0;
-
-const resizeHandle = document.getElementById('resizeHandle');
-
-if (resizeHandle) {
-    resizeHandle.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        e.preventDefault();
-        document.body.style.cursor = 'nwse-resize';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isResizing) return;
-
-        const deltaX = e.clientX - startX;
-        const deltaY = e.clientY - startY;
-
-        const currentWidth = window.innerWidth;
-        const currentHeight = window.innerHeight;
-
-        const newWidth = Math.max(300, currentWidth + deltaX);
-        const newHeight = Math.max(300, currentHeight + deltaY);
-
-        // Update window size inline
-        document.documentElement.style.width = newWidth + 'px';
-        document.documentElement.style.height = newHeight + 'px';
-        document.body.style.width = newWidth + 'px';
-        document.body.style.height = newHeight + 'px';
-        document.documentElement.style.minWidth = newWidth + 'px';
-        document.documentElement.style.minHeight = newHeight + 'px';
-
-        // Store resize preference
-        chrome.storage.local.set({ 'randomix_dimensions': { width: newWidth, height: newHeight } });
-    });
-
-    document.addEventListener('mouseup', () => {
-        isResizing = false;
-        document.body.style.cursor = 'default';
-    });
-}
-
-// Load saved dimensions on startup
-chrome.storage.local.get(['randomix_dimensions'], (result) => {
-    if (result.randomix_dimensions) {
-        const { width, height } = result.randomix_dimensions;
-        document.documentElement.style.width = width + 'px';
-        document.documentElement.style.height = height + 'px';
-        document.documentElement.style.minWidth = width + 'px';
-        document.documentElement.style.minHeight = height + 'px';
-        document.body.style.width = width + 'px';
-        document.body.style.height = height + 'px';
-        document.body.style.minWidth = width + 'px';
-        document.body.style.minHeight = height + 'px';
-    }
-});
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', init);

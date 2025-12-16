@@ -35,17 +35,12 @@ body.light-mode {
     --glow: 0 0 20px rgba(29, 155, 240, 0.2);
 }
 
-html,
-body {
-    width: 400px !important;
-    min-width: 400px !important;
-    max-width: 400px !important;
-    height: 500px !important;
-    min-height: 500px !important;
-    max-height: 500px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden;
+html, body {
+    width: 400px;
+    min-width: 350px;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
 }
 
 body {
@@ -55,24 +50,6 @@ body {
     transition: background-color 0.2s ease, color 0.2s ease;
     overflow-y: auto;
     position: relative;
-}
-
-/* Resize Handle */
-.resize-handle {
-    position: fixed;
-    bottom: 0;
-    right: 0;
-    width: 20px;
-    height: 20px;
-    cursor: nwse-resize;
-    background: linear-gradient(135deg, transparent 50%, var(--accent-color) 50%);
-    opacity: 0.3;
-    transition: opacity 0.2s ease;
-    z-index: 9999;
-}
-
-.resize-handle:hover {
-    opacity: 0.7;
 }
 
 .container {
