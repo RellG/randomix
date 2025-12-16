@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" style="width:400px;height:500px;margin:0;padding:0;">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,8 +14,8 @@
                 <h1>Randomix</h1>
                 <p class="header-subtitle">Secure password generator</p>
             </div>
-            <button id="themeToggle" class="theme-toggle" title="Toggle theme">
-                <span class="theme-icon">☀️</span>
+            <button id="themeToggle" class="theme-toggle" title="Toggle between light and dark theme" aria-label="Toggle between light and dark theme">
+                <span class="theme-icon" aria-hidden="true">&#9788;</span>
             </button>
         </div>
 
@@ -28,24 +28,25 @@
                     class="password-input"
                     readonly
                     placeholder="Click regenerate to create a password"
+                    aria-label="Generated password"
                 >
-                <button id="clearBtn" class="clear-btn" title="Clear password field">
-                    <span class="clear-icon">✕</span>
+                <button id="clearBtn" class="clear-btn" title="Clear password field" aria-label="Clear password">
+                    <span class="clear-icon" aria-hidden="true">&#10005;</span>
                 </button>
-                <button id="copyBtn" class="copy-btn" title="Copy to clipboard">
-                    <span class="copy-icon">📋</span>
+                <button id="copyBtn" class="copy-btn" title="Copy to clipboard" aria-label="Copy password to clipboard">
+                    <span class="copy-icon" aria-hidden="true">&#128203;</span>
                 </button>
             </div>
-            <div id="copyToast" class="toast">Copied to clipboard!</div>
+            <div id="copyToast" class="toast" role="status" aria-live="polite">Copied to clipboard!</div>
         </div>
 
         <!-- Strength Meter -->
-        <div class="strength-section">
+        <div class="strength-section" role="region" aria-label="Password strength indicator">
             <div class="strength-label">
                 <span>Password Strength:</span>
-                <span id="strengthText" class="strength-text">-</span>
+                <span id="strengthText" class="strength-text" aria-live="polite">-</span>
             </div>
-            <div class="strength-bar">
+            <div class="strength-bar" role="progressbar" aria-label="Password strength meter" aria-valuemin="0" aria-valuemax="100">
                 <div id="strengthMeter" class="strength-meter"></div>
             </div>
             <div class="entropy-info">

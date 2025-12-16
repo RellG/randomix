@@ -1,7 +1,24 @@
 /**
  * Popup Script
  * Handles UI interactions and event listeners
+ * Randomix - Secure Password Generator
  */
+
+// Constants
+const STORAGE_KEY = 'randomix_settings';
+const MIN_LENGTH = 8;
+const MAX_LENGTH = 64;
+const PIN_MIN_LENGTH = 4;
+const MAX_REQUIREMENT_ATTEMPTS = 10;
+const COPY_FEEDBACK_DURATION = 1500;
+const TOAST_DURATION = 2000;
+const SLIDER_DEBOUNCE_DELAY = 150;
+
+// Theme icons (Unicode entities)
+const ICON_SUN = '\u263C';      // ☼
+const ICON_MOON = '\u263D';     // ☽
+const ICON_CHECK = '\u2713';    // ✓
+const ICON_CLIPBOARD = '\u{1F4CB}'; // 📋
 
 // DOM Elements
 const passwordInput = document.getElementById('passwordInput');
@@ -31,8 +48,26 @@ const reqNumbers = document.getElementById('reqNumbers');
 const reqSymbols = document.getElementById('reqSymbols');
 const reqNoSimilar = document.getElementById('reqNoSimilar');
 
-// Settings storage key
-const STORAGE_KEY = 'randomix_settings';
+// State variables
+let isPinMode = false;
+let copyFeedbackTimeout = null;
+let sliderDebounceTimeout = null;
+
+/**
+ * Reset to standard password mode (exit PIN mode)
+ */
+function resetToStandardMode() {
+    if (isPinMode) {
+        lengthSlider.min = MIN_LENGTH;
+        lengthInput.min = MIN_LENGTH;
+        // If current value is below standard minimum, reset it
+        if (parseInt(lengthSlider.value) < MIN_LENGTH) {
+            lengthSlider.value = MIN_LENGTH;
+            lengthInput.value = MIN_LENGTH;
+        }
+        isPinMode = false;
+    }
+}
 
 /**
  * Apply preset settings
@@ -40,10 +75,11 @@ const STORAGE_KEY = 'randomix_settings';
 function applyPreset(preset) {
     switch(preset) {
         case 'pin':
-            lengthSlider.value = 4;
-            lengthSlider.min = 4;
-            lengthInput.value = 4;
-            lengthInput.min = 4;
+            isPinMode = true;
+            lengthSlider.value = PIN_MIN_LENGTH;
+            lengthSlider.min = PIN_MIN_LENGTH;
+            lengthInput.value = PIN_MIN_LENGTH;
+            lengthInput.min = PIN_MIN_LENGTH;
             uppercaseToggle.checked = false;
             lowercaseToggle.checked = false;
             numbersToggle.checked = true;
@@ -85,6 +121,34 @@ function init() {
 }
 
 /**
+ * Validate and sanitize settings loaded from storage
+ */
+function validateSettings(settings) {
+    if (!settings || typeof settings !== 'object') {
+        return null;
+    }
+
+    // Validate length
+    let length = parseInt(settings.length);
+    if (isNaN(length) || length < PIN_MIN_LENGTH || length > MAX_LENGTH) {
+        length = 16; // Default
+    }
+
+    return {
+        length: length,
+        uppercase: settings.uppercase !== false,
+        lowercase: settings.lowercase !== false,
+        numbers: settings.numbers !== false,
+        symbols: settings.symbols !== false,
+        lightMode: Boolean(settings.lightMode),
+        reqNumbers: Boolean(settings.reqNumbers),
+        reqSymbols: Boolean(settings.reqSymbols),
+        reqNoSimilar: Boolean(settings.reqNoSimilar),
+        isPinMode: Boolean(settings.isPinMode)
+    };
+}
+
+/**
  * Load settings from chrome.storage.local
  */
 function loadSettings() {
@@ -97,26 +161,38 @@ function loadSettings() {
         }
 
         if (result[STORAGE_KEY]) {
-            const settings = result[STORAGE_KEY];
-            lengthSlider.value = settings.length || 16;
-            uppercaseToggle.checked = settings.uppercase !== false;
-            lowercaseToggle.checked = settings.lowercase !== false;
-            numbersToggle.checked = settings.numbers !== false;
-            symbolsToggle.checked = settings.symbols !== false;
+            const settings = validateSettings(result[STORAGE_KEY]);
 
-            // Check light mode preference (dark is now default)
-            if (settings.lightMode) {
-                document.body.classList.add('light-mode');
-                updateThemeIcon();
+            if (settings) {
+                // Apply PIN mode state first
+                isPinMode = settings.isPinMode;
+                if (isPinMode) {
+                    lengthSlider.min = PIN_MIN_LENGTH;
+                    lengthInput.min = PIN_MIN_LENGTH;
+                }
+
+                lengthSlider.value = settings.length;
+                uppercaseToggle.checked = settings.uppercase;
+                lowercaseToggle.checked = settings.lowercase;
+                numbersToggle.checked = settings.numbers;
+                symbolsToggle.checked = settings.symbols;
+
+                // Load requirements state
+                reqNumbers.checked = settings.reqNumbers;
+                reqSymbols.checked = settings.reqSymbols;
+                reqNoSimilar.checked = settings.reqNoSimilar;
+
+                // Check light mode preference (dark is now default)
+                if (settings.lightMode) {
+                    document.body.classList.add('light-mode');
+                    updateThemeIcon();
+                }
             }
-        } else {
-            // No settings saved yet, use defaults
-            updateLengthDisplay();
         }
 
         // Generate password after settings are loaded
-        generateNewPassword();
         updateLengthDisplay();
+        generateNewPassword();
     });
 }
 
@@ -130,7 +206,13 @@ function saveSettings() {
         lowercase: lowercaseToggle.checked,
         numbers: numbersToggle.checked,
         symbols: symbolsToggle.checked,
-        lightMode: document.body.classList.contains('light-mode')
+        lightMode: document.body.classList.contains('light-mode'),
+        // Requirements state
+        reqNumbers: reqNumbers.checked,
+        reqSymbols: reqSymbols.checked,
+        reqNoSimilar: reqNoSimilar.checked,
+        // PIN mode state
+        isPinMode: isPinMode
     };
     chrome.storage.local.set({ [STORAGE_KEY]: settings }, () => {
         if (chrome.runtime.lastError) {
@@ -166,9 +248,9 @@ function generateNewPassword() {
 
     let password = passwordGenerator.generate(length, options);
 
-    // Regenerate if password doesn't meet requirements (max 10 attempts)
+    // Regenerate if password doesn't meet requirements (max attempts)
     let attempts = 0;
-    while (!meetsRequirements(password) && attempts < 10) {
+    while (!meetsRequirements(password) && attempts < MAX_REQUIREMENT_ATTEMPTS) {
         password = passwordGenerator.generate(length, options);
         attempts++;
     }
@@ -233,22 +315,24 @@ function copyToClipboard() {
         // Show toast notification
         copyToast.classList.add('show');
 
-        // Hide toast after 2 seconds
+        // Hide toast after duration
         setTimeout(() => {
             copyToast.classList.remove('show');
-        }, 2000);
+        }, TOAST_DURATION);
 
-        // Visual feedback on button
+        // Visual feedback on button - clear previous timeout to prevent race condition
+        clearTimeout(copyFeedbackTimeout);
+
         const originalIcon = copyBtn.querySelector('.copy-icon');
-        const originalIconText = originalIcon ? originalIcon.textContent : '📋';
+        const originalIconText = originalIcon ? originalIcon.textContent : ICON_CLIPBOARD;
 
-        copyBtn.innerHTML = '<span class="copy-icon">✓</span>';
+        copyBtn.innerHTML = '<span class="copy-icon" aria-hidden="true">' + ICON_CHECK + '</span>';
         copyBtn.style.backgroundColor = 'var(--success-color)';
 
-        setTimeout(() => {
-            copyBtn.innerHTML = '<span class="copy-icon">' + originalIconText + '</span>';
+        copyFeedbackTimeout = setTimeout(() => {
+            copyBtn.innerHTML = '<span class="copy-icon" aria-hidden="true">' + originalIconText + '</span>';
             copyBtn.style.backgroundColor = '';
-        }, 1500);
+        }, COPY_FEEDBACK_DURATION);
     }).catch(err => {
         console.error('Failed to copy:', err);
     });
@@ -270,7 +354,7 @@ function updateThemeIcon() {
     const isLightMode = document.body.classList.contains('light-mode');
     const icon = themeToggle.querySelector('.theme-icon');
     if (icon) {
-        icon.textContent = isLightMode ? '🌙' : '☀️';
+        icon.textContent = isLightMode ? ICON_MOON : ICON_SUN;
     }
 }
 
@@ -287,18 +371,26 @@ function setupEventListeners() {
     // Copy button
     copyBtn.addEventListener('click', copyToClipboard);
 
-    // Length slider
+    // Length slider with debouncing for performance
     lengthSlider.addEventListener('input', () => {
         updateLengthDisplay();
-        generateNewPassword();
+        updateStrengthMeter();
+
+        // Debounce password generation for smooth slider experience
+        clearTimeout(sliderDebounceTimeout);
+        sliderDebounceTimeout = setTimeout(() => {
+            generateNewPassword();
+        }, SLIDER_DEBOUNCE_DELAY);
     });
 
     // Length input field
     lengthInput.addEventListener('change', () => {
         let value = parseInt(lengthInput.value);
+        const minValue = isPinMode ? PIN_MIN_LENGTH : MIN_LENGTH;
+
         // Validate range
-        if (isNaN(value) || value < 8) value = 8;
-        if (value > 64) value = 64;
+        if (isNaN(value) || value < minValue) value = minValue;
+        if (value > MAX_LENGTH) value = MAX_LENGTH;
         lengthInput.value = value;
         lengthSlider.value = value;
         generateNewPassword();
@@ -307,14 +399,16 @@ function setupEventListeners() {
     // Allow real-time sync on input and update strength meter
     lengthInput.addEventListener('input', () => {
         let value = parseInt(lengthInput.value);
-        if (!isNaN(value) && value >= 8 && value <= 64) {
+        const minValue = isPinMode ? PIN_MIN_LENGTH : MIN_LENGTH;
+
+        if (!isNaN(value) && value >= minValue && value <= MAX_LENGTH) {
             lengthSlider.value = value;
             // Update strength meter in real-time without generating new password
             updateStrengthMeter();
         }
     });
 
-    // Character option toggles
+    // Character option toggles - exit PIN mode when manually changing options
     [uppercaseToggle, lowercaseToggle, numbersToggle, symbolsToggle].forEach(toggle => {
         toggle.addEventListener('change', () => {
             // Ensure at least one option is selected
@@ -323,6 +417,12 @@ function setupEventListeners() {
                 toggle.checked = true;
                 return;
             }
+
+            // Exit PIN mode if user manually changes character options
+            if (isPinMode && (uppercaseToggle.checked || lowercaseToggle.checked || symbolsToggle.checked)) {
+                resetToStandardMode();
+            }
+
             generateNewPassword();
         });
     });
@@ -337,6 +437,7 @@ function setupEventListeners() {
     [reqNumbers, reqSymbols, reqNoSimilar].forEach(req => {
         req.addEventListener('change', () => {
             generateNewPassword();
+            saveSettings();
         });
     });
 

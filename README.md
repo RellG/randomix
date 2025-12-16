@@ -1,34 +1,47 @@
 # Randomix
 
-🔐 **Secure Password Generator Chrome Extension**
+**Secure Password Generator Chrome Extension**
 
 A sleek, modern Chrome extension that generates strong, random passwords with real-time entropy analysis and password strength visualization.
 
 ## Features
 
-✨ **Password Generation**
+**Password Generation**
 - Generate secure random passwords (8-64 characters)
 - Customize character sets: Uppercase, Lowercase, Numbers, Symbols
 - Real-time entropy calculation and strength assessment
 - One-click copy to clipboard
+- Clear password button
 
-📊 **Strength Meter**
+**PIN Preset**
+- Quick 4-digit PIN generation mode
+- Numbers-only character set
+- Minimum 4-character length for PINs
+
+**Password Requirements (Optional)**
+- Must have numbers - ensures password contains digits
+- Must have symbols - ensures password contains special characters
+- No similar chars - excludes confusing characters (0/O, 1/l, |, `)
+
+**Strength Meter**
 - Visual password strength indicator with color-coded feedback
-- Red → Orange → Green gradient based on entropy
+- Red to Orange to Green gradient based on entropy
 - Entropy bits calculation (measured in bits of randomness)
 - Strength levels: Weak, Fair, Good, Strong
 
-🎨 **Modern UI**
+**Modern UI**
 - Dark-first theme inspired by xAI (Grok) and X (Twitter)
 - Clean, minimalist design with X Blue accent color (#1d9bf0)
 - Light mode toggle for user preference
+- Auto-detects system color preference
 - Smooth animations and responsive interactions
+- Full accessibility support (ARIA labels, screen reader compatible)
 
-⚙️ **Smart Controls**
+**Smart Controls**
 - Password length slider for quick adjustments
 - Custom length input field (8-64) with real-time validation
 - Strength meter updates instantly as length changes
-- All settings persisted in browser storage
+- All settings persisted in browser storage (including requirements)
 
 ## Installation
 
@@ -60,8 +73,18 @@ A sleek, modern Chrome extension that generates strong, random passwords with re
 4. Toggle character types: A-Z, a-z, 0-9, !@#$
 5. Watch the strength meter update in real-time
 
+### Use PIN Preset
+1. Click the **# PIN** button for quick PIN generation
+2. Automatically sets 4-digit, numbers-only mode
+3. Perfect for quick codes and PINs
+
+### Set Requirements
+1. Check "Must have numbers" to ensure digits are included
+2. Check "Must have symbols" for special characters
+3. Check "No similar chars" to avoid confusing characters
+
 ### Copy Password
-- Click the 📋 button next to the password
+- Click the clipboard button next to the password
 - Or click directly on the password field
 - Toast notification confirms the copy
 
@@ -69,22 +92,22 @@ A sleek, modern Chrome extension that generates strong, random passwords with re
 - **Length**: Use slider or type in the number field
 - **Character Sets**: Toggle any combination on/off
 - **Theme**: Click the sun/moon icon to switch between dark/light modes
-- Settings are automatically saved
+- Settings are automatically saved and restored
 
 ## Project Structure
 
 ```
 randomix/
-├── manifest.json          # Chrome extension manifest
+├── manifest.json          # Chrome extension manifest (MV3)
 ├── popup.html             # Extension popup interface
-├── popup.js               # UI event handlers
+├── popup.js               # UI event handlers and state management
 ├── generator.js           # Password generation logic
-├── styles.css             # Extension styling
+├── styles.css             # Extension styling (dark/light themes)
 ├── assets/
-│   ├── icon.svg           # Extension icon (SVG)
-│   ├── icon-16.svg        # 16x16 icon
-│   ├── icon-48.svg        # 48x48 icon
-│   └── icon-128.svg       # 128x128 icon
+│   ├── icon.svg           # Master icon (SVG)
+│   ├── icon-16.png        # 16x16 toolbar icon
+│   ├── icon-48.png        # 48x48 extension menu icon
+│   └── icon-128.png       # 128x128 Chrome Web Store icon
 └── README.md              # This file
 ```
 
@@ -92,46 +115,69 @@ randomix/
 
 ### Password Generation
 - Uses `crypto.getRandomValues()` for cryptographically secure randomness
-- Entropy calculated as: `bits = length × log₂(charset_size)`
+- Entropy calculated as: `bits = length x log2(charset_size)`
 - Supports character sets: Uppercase, Lowercase, Numbers, Symbols
+- Requirements system regenerates until conditions are met (max 10 attempts)
 
 ### Strength Levels
 - **Weak**: < 32 bits
 - **Fair**: 32-59 bits
 - **Good**: 60-79 bits
-- **Strong**: ≥ 80 bits
+- **Strong**: >= 80 bits
 
 ### Browser Storage
 - Settings stored in `chrome.storage.local`
-- Includes: password length, character options, theme preference
+- Includes: password length, character options, theme preference, requirements
 - Persists across browser sessions
 
+### Chrome Requirements
+- Minimum Chrome version: 88 (Manifest V3)
+- Permissions: `storage` only
+
 ## Version History
+
+### v2.4.0 (Production Release)
+- Full accessibility compliance with ARIA labels
+- Content Security Policy (CSP) for enhanced security
+- Replaced emojis with Unicode symbols for cross-platform consistency
+- Fixed PIN preset minimum length reset bug
+- Requirements state now persisted across sessions
+- Fixed copy button race condition
+- Added debouncing for slider performance
+- Removed extraneous files for smaller package size
+- Code refactored with extracted constants
+
+### v2.3.2
+- Removed non-functional drag-to-resize
+- Fixed CSS dimensions for proper auto-sizing
+- Added error handling to all chrome.storage operations
+
+### v2.3.1
+- Refined presets (PIN only)
+- Changed PIN minimum from 8 to 4 digits
+
+### v2.3.0
+- Added password presets (PIN mode)
+- Added strength requirements (Must have numbers/symbols, No similar chars)
+- Auto-detect system theme preference
+
+### v2.2.0
+- Added clear button to password field
+- Added subtitle to extension header
+- Changed strength meter to bold red/orange/green gradient
 
 ### v2.1.2
 - Real-time strength meter updates when changing custom password length
 - Custom length input field with validation
-- Improved UI/UX with helpful hints
-
-### v2.1.1
-- Added extension subtitle ("Secure password generator")
-- Updated strength meter with bold red→orange→green gradient
-- Enhanced custom length input with placeholder text
 
 ### v2.1.0
 - Modern password lock icon for extension branding
 - Custom password length input field (8-64)
-- Real-time input validation
-
-### v2.0.1
-- Fixed popup window dimensions with inline styles and CSS !important
-- Ensured consistent display across all Chrome versions
 
 ### v2.0.0
 - Complete redesign with xAI/X inspired dark theme
 - X Blue accent color and minimalist UI
 - Theme toggle (dark/light mode)
-- Compact 2x2 character option grid
 
 ## Design Inspiration
 
@@ -142,16 +188,24 @@ Randomix follows modern design principles from:
 
 ## Privacy & Security
 
-✅ **Privacy First**
+**Privacy First**
 - No data sent to external servers
 - All processing happens locally in your browser
 - No tracking or analytics
 - Settings stored only in your browser
+- No external dependencies or third-party code
 
-✅ **Cryptographically Secure**
+**Cryptographically Secure**
 - Uses browser's native `crypto.getRandomValues()`
 - Not using Math.random() - truly random password generation
 - Entropy-based strength calculation
+- Content Security Policy enforced
+
+**Accessibility**
+- Full ARIA label support
+- Screen reader compatible
+- Keyboard navigation support
+- High contrast color scheme
 
 ## Contributing
 
@@ -167,6 +221,6 @@ For issues, feature requests, or questions, please open an issue on GitHub: [git
 
 ---
 
-**Made with ❤️ by RellG**
+**Made with care by RellG**
 
 *Randomix - Because strong passwords shouldn't be complicated.*
